@@ -1,0 +1,22 @@
+# Compilation
+out/
+*.class
+*.jar
+!gradle/wrapper/*.jar
+
+# Bibliotheque JADE (telechargee par "ant get-jade")
+lib/
+
+# Fichiers generes automatiquement par JADE au lancement
+APDescription.txt
+MTPs-Main-Container.txt
+
+# IDE / systeme
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+.DS_Store
+Thumbs.db

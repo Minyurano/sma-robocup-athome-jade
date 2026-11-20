@@ -1,61 +1,93 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="SMA-RoboCup-JADE" default="run" basedir=".">
 
-    <property name="src.dir"    value="src"/>
-    <property name="out.dir"    value="out"/>
-    <property name="lib.dir"    value="lib"/>
-    <property name="jar.file"   value="sma_robocup.jar"/>
+    <description>Systeme multi-agents RoboCup@Home sur la plateforme JADE</description>
+
+    <property name="src.dir"      value="src"/>
+    <property name="out.dir"      value="out"/>
+    <property name="lib.dir"      value="lib"/>
+    <property name="jar.file"     value="sma_robocup.jar"/>
+    <property name="jade.version" value="4.6.0"/>
+    <property name="jade.jar"     value="${lib.dir}/jade.jar"/>
+    <property name="jade.url"
+              value="https://jade.tilab.com/maven/com/tilab/jade/jade/${jade.version}/jade-${jade.version}.jar"/>
+
+    <!-- Les 5 agents du systeme (nom:classe) -->
+    <property name="agents"
+              value="AgentInteractionHumaine:robocup.agents.HumanInteractionAgent;AgentCoordinateurTaches:robocup.agents.TaskCoordinatorAgent;AgentNavigation:robocup.agents.NavigationAgent;AgentManipulation:robocup.agents.ManipulationAgent;AgentSurveillance:robocup.agents.SurveillanceAgent"/>
 
     <path id="classpath">
-        <fileset dir="${lib.dir}" includes="*.jar"/>
+        <fileset dir="${lib.dir}" includes="*.jar" erroronmissingdir="false"/>
         <pathelement location="${out.dir}"/>
     </path>
 
-    <target name="clean">
-        <delete dir="${out.dir}"/>
-        <echo>✅ Nettoyé.</echo>
+    <!-- Telecharge JADE une seule fois dans lib/ -->
+    <target name="get-jade" description="Telecharge jade.jar dans lib/ s'il est absent">
+        <available file="${jade.jar}" property="jade.present"/>
+        <antcall target="-download-jade"/>
+        <fail message="jade.jar introuvable. Telechargez-le sur https://jade.tilab.com/download/jade/ et placez-le dans ${jade.jar}">
+            <condition><not><available file="${jade.jar}"/></not></condition>
+        </fail>
     </target>
 
-    <target name="compile">
+    <target name="-download-jade" unless="jade.present">
+        <mkdir dir="${lib.dir}"/>
+        <echo>Telechargement de JADE ${jade.version}...</echo>
+        <get src="${jade.url}" dest="${jade.jar}" ignoreerrors="true" usetimestamp="true"/>
+    </target>
+
+    <target name="-check-src">
+        <fail message="Dossier ${src.dir}/ absent : le code source Java n'est pas encore dans ce depot.">
+            <condition><not><available file="${src.dir}" type="dir"/></not></condition>
+        </fail>
+    </target>
+
+    <target name="clean" description="Supprime les fichiers compiles et generes">
+        <delete dir="${out.dir}"/>
+        <delete file="${jar.file}"/>
+        <delete file="APDescription.txt"/>
+        <delete file="MTPs-Main-Container.txt"/>
+        <echo>Nettoyage termine.</echo>
+    </target>
+
+    <target name="compile" depends="-check-src,get-jade" description="Compile le code Java">
         <mkdir dir="${out.dir}"/>
         <javac srcdir="${src.dir}"
                destdir="${out.dir}"
                encoding="UTF-8"
+               release="11"
                includeantruntime="false"
                classpathref="classpath">
             <compilerarg value="-Xlint:unchecked"/>
         </javac>
-        <echo>✅ Compilation terminée.</echo>
+        <echo>Compilation terminee.</echo>
     </target>
 
-    <target name="run" depends="compile">
-        <java classname="robocup.Main"
-              fork="true"
-              classpathref="classpath">
+    <target name="run" depends="compile" description="Lance le systeme avec le tableau de bord">
+        <java classname="robocup.Main" fork="true" classpathref="classpath">
             <jvmarg value="-Xmx256m"/>
         </java>
     </target>
 
-    <target name="run-jade-gui" depends="compile">
-        <java classname="jade.Boot"
-              fork="true"
-              classpathref="classpath">
+    <!-- Le tableau de bord (DashboardGUI) est une fenetre Swing ouverte par Main,
+         ce n'est pas un agent : il n'apparait donc pas dans la liste des agents. -->
+    <target name="run-jade-gui" depends="compile" description="Lance les agents avec l'interface JADE (RMA, Sniffer, DF)">
+        <java classname="jade.Boot" fork="true" classpathref="classpath">
             <jvmarg value="-Xmx256m"/>
             <arg value="-gui"/>
             <arg value="-agents"/>
-            <arg value="AgentInteractionHumaine:robocup.agents.HumanInteractionAgent;AgentCoordinateurTaches:robocup.agents.TaskCoordinatorAgent;AgentNavigation:robocup.agents.NavigationAgent;AgentManipulation:robocup.agents.ManipulationAgent;AgentSurveillance:robocup.agents.SurveillanceAgent;Dashboard:robocup.gui.DashboardAgent"/>
+            <arg value="${agents}"/>
         </java>
     </target>
 
-    <target name="jar" depends="compile">
-        <jar destfile="${jar.file}"
-             basedir="${out.dir}">
+    <target name="jar" depends="compile" description="Construit sma_robocup.jar">
+        <jar destfile="${jar.file}" basedir="${out.dir}">
             <manifest>
                 <attribute name="Main-Class" value="robocup.Main"/>
                 <attribute name="Class-Path" value="lib/jade.jar"/>
             </manifest>
         </jar>
-        <echo>✅ JAR créé : ${jar.file}</echo>
+        <echo>JAR cree : ${jar.file}</echo>
     </target>
 
 </project>
