@@ -192,8 +192,8 @@ Avec `ant run-jade-gui` :
 
 ## 👤 Auteur
 
-**AYOUB BOURTI**  
-📧 ayoubbourti3@gmail.com
+**MINYURANO Aloys** — Master AI & Data Science  
+GitHub : [@Minyurano](https://github.com/Minyurano)
 
-Projet universitaire Master AI & DATA SCIENCE — Systèmes Multi-Agents  
-Plateforme : JADE 4.x — https://jade.tilab.com
+Projet universitaire — module Systèmes Multi-Agents  
+Plateforme : [JADE 4.x](https://jade.tilab.com)
